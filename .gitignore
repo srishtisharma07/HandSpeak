@@ -1,0 +1,126 @@
+# ============================================================
+# HandSpeak — .gitignore
+# ============================================================
+
+# ── Python ──────────────────────────────────────────────────
+__pycache__/
+*.py[codz]
+*$py.class
+*.so
+*.pyd
+
+# ── Virtual environments ─────────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+venv.bak/
+env.bak/
+.pixi/
+
+# ── Distribution / packaging ─────────────────────────────────
+build/
+dist/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ── PyInstaller ──────────────────────────────────────────────
+*.manifest
+*.spec
+
+# ── Testing / coverage ───────────────────────────────────────
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# ── Jupyter ──────────────────────────────────────────────────
+.ipynb_checkpoints
+
+# ── Environment variables / secrets ─────────────────────────
+.env
+.env.*
+!.env.example
+.envrc
+local_settings.py
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ── Type checkers / linters ──────────────────────────────────
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+cython_debug/
+
+# ── Editors & IDEs ───────────────────────────────────────────
+.vscode/
+.idea/
+.spyderproject
+.spyproject
+.ropeproject
+.cursorignore
+.cursorindexingignore
+*.swp
+*.swo
+
+# ── Node / React ─────────────────────────────────────────────
+node_modules/
+frontend/build/
+frontend/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── macOS ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Large raw image dataset (1 GB+, use Kaggle to download) ──
+data/asl_alphabet_train/
+
+# ── Large sequence dataset (.npy training files, ~280 MB) ────
+data/sequence_dataset/
+
+# ── Python package misc ──────────────────────────────────────
+.pdm-python
+.pdm-build/
+__pypackages__/
+celerybeat-schedule
+celerybeat.pid
+*.sage.py
+.pypirc
+.abstra/
+marimo/_static/
+marimo/_lsp/
+__marimo__/
+
+# ── Project build artefacts ──────────────────────────────────
+sign_language_tutor.egg-info/
