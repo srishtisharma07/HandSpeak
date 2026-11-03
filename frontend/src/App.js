@@ -156,7 +156,38 @@ function App() {
   const [phrase, setPhrase] = useState("");
   const [phraseResult, setPhraseResult] = useState(null); 
   const [guideSearch, setGuideSearch] = useState("");
-  const [selectedGuideLetter, setSelectedGuideLetter] = useState(null); 
+  const [selectedGuideLetter, setSelectedGuideLetter] = useState(null);
+  const [themePref, setThemePref] = useState(() => {
+    return localStorage.getItem('signTutorTheme') || 'system';
+  });
+
+  useEffect(() => {
+    const applyTheme = () => {
+      let resolved = themePref;
+      if (themePref === 'system') {
+        const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        resolved = isDark ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', resolved);
+    };
+
+    applyTheme();
+    try {
+      localStorage.setItem('signTutorTheme', themePref);
+    } catch (e) {}
+
+    if (themePref === 'system' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const listener = () => applyTheme();
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', listener);
+        return () => mediaQuery.removeEventListener('change', listener);
+      } else if (mediaQuery.addListener) {
+        mediaQuery.addListener(listener);
+        return () => mediaQuery.removeListener(listener);
+      }
+    }
+  }, [themePref]); 
 
   const setTab = (newTab) => {
     setTabState(newTab);
@@ -489,6 +520,52 @@ function App() {
         </div>
         
         <div className="topbar-right">
+          <div className="theme-toggle-group" role="group" aria-label="Theme selector">
+            <button 
+              type="button"
+              className={`theme-btn ${themePref === 'light' ? 'active' : ''}`}
+              onClick={() => setThemePref('light')}
+              title="Light mode"
+              aria-label="Light mode"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            </button>
+            <button 
+              type="button"
+              className={`theme-btn ${themePref === 'system' ? 'active' : ''}`}
+              onClick={() => setThemePref('system')}
+              title="System theme"
+              aria-label="System theme"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+            </button>
+            <button 
+              type="button"
+              className={`theme-btn ${themePref === 'dark' ? 'active' : ''}`}
+              onClick={() => setThemePref('dark')}
+              title="Dark mode"
+              aria-label="Dark mode"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            </button>
+          </div>
+
           {user ? (
             <div className="user-profile-nav">
               <div className="avatar">{user.name.charAt(0).toUpperCase()}</div>
