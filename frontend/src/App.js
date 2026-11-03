@@ -155,6 +155,8 @@ function App() {
 
   const [phrase, setPhrase] = useState("");
   const [phraseResult, setPhraseResult] = useState(null); 
+  const [guideSearch, setGuideSearch] = useState("");
+  const [selectedGuideLetter, setSelectedGuideLetter] = useState(null); 
 
   const setTab = (newTab) => {
     setTabState(newTab);
@@ -694,21 +696,98 @@ function App() {
             )}
 
             {tab === "guide" && (
-              <div className="view-container align-left">
-                <h2 className="section-title">The Alphabet</h2>
+              <div className="view-container align-left guide-view">
+                <div className="guide-header">
+                  <div className="guide-header-text">
+                    <div className="guide-title-row">
+                      <h2 className="section-title">ASL Alphabet Dictionary</h2>
+                      <span className="guide-badge">26 Signs</span>
+                    </div>
+                    <p className="guide-subtitle">
+                      Visual finger-spelling dictionary for American Sign Language (A–Z). Click any card for details.
+                    </p>
+                  </div>
+                  <div className="guide-search-wrapper">
+                    <span className="guide-search-icon">🔍</span>
+                    <input
+                      type="text"
+                      className="guide-search-input"
+                      placeholder="Search letter (e.g. A, B...)"
+                      value={guideSearch}
+                      onChange={(e) => setGuideSearch(e.target.value.toUpperCase().trim())}
+                      maxLength={2}
+                    />
+                    {guideSearch && (
+                      <button className="guide-clear-search" onClick={() => setGuideSearch("")}>✕</button>
+                    )}
+                  </div>
+                </div>
+
                 <div className="dictionary-grid">
-                  {LETTERS.map((l) => (
-                    <div key={l} className="dict-card">
-                      {/* CRITICAL FIX: The CSS filter invert(1) instantly flips the black PNG lines to white! */}
-                      <img 
-                        src={`/data/guide_images/Sign_language_${l}.svg.png`} 
-                        alt={`Sign ${l}`} 
-                        style={{ filter: "invert(1)" }} 
-                      />
-                      <p>{l}</p>
+                  {LETTERS.filter((l) => !guideSearch || l.includes(guideSearch)).map((l) => (
+                    <div
+                      key={l}
+                      className="dict-card"
+                      onClick={() => setSelectedGuideLetter(l)}
+                      title={`Inspect sign for letter ${l}`}
+                    >
+                      <div className="dict-img-wrapper">
+                        <img 
+                          src={`${process.env.PUBLIC_URL || ""}/data/guide_images/Sign_language_${l}.svg.png`} 
+                          alt={`ASL Sign ${l}`} 
+                          className="dict-sign-img"
+                          loading="lazy"
+                          onError={(e) => {
+                            if (!e.currentTarget.dataset.retried) {
+                              e.currentTarget.dataset.retried = "true";
+                              e.currentTarget.src = `./data/guide_images/Sign_language_${l}.svg.png`;
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="dict-footer">
+                        <span className="dict-letter">{l}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
+
+                {selectedGuideLetter && (
+                  <div className="guide-modal-backdrop" onClick={() => setSelectedGuideLetter(null)}>
+                    <div className="guide-modal-card" onClick={(e) => e.stopPropagation()}>
+                      <button className="guide-modal-close" onClick={() => setSelectedGuideLetter(null)}>✕</button>
+                      
+                      <div className="guide-modal-header">
+                        <span className="guide-modal-tag">ASL Reference</span>
+                        <h3 className="guide-modal-title">Letter {selectedGuideLetter}</h3>
+                      </div>
+
+                      <div className="guide-modal-image-box">
+                        <img
+                          src={`${process.env.PUBLIC_URL || ""}/data/guide_images/Sign_language_${selectedGuideLetter}.svg.png`}
+                          alt={`ASL sign for ${selectedGuideLetter}`}
+                          className="guide-modal-img"
+                        />
+                      </div>
+
+                      <p className="guide-modal-hint">
+                        Hold this exact hand shape in front of your camera to practice.
+                      </p>
+
+                      <div className="guide-modal-actions">
+                        <button
+                          className="btn primary lg full-width"
+                          onClick={() => {
+                            setSelectedGuideLetter(null);
+                            setTab("predict");
+                          }}
+                        >
+                          Practice in Live Detection →
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
