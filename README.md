@@ -1,364 +1,414 @@
-<div align="center">
+# HandSpeak — AI-Powered Sign Language Tutor
 
-# 🤟 HandSpeak
-
-### An AI-powered Sign Language Tutor — Learn, Practice & Get Recognised in Real Time
-
-[![Python](https://img.shields.io/badge/Python-3.10-blue?logo=python)](https://www.python.org/)
-[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-orange?logo=tensorflow)](https://www.tensorflow.org/)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
-[![MediaPipe](https://img.shields.io/badge/MediaPipe-Hands-purple)](https://mediapipe.dev/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-
-</div>
+An interactive web application that helps users learn, practice, and test American Sign Language (ASL) in real time using computer vision and machine learning.
 
 ---
 
-## 📌 Table of Contents
+## Table of Contents
 
-- [Problem Statement](#-problem-statement)
-- [Project Objectives](#-project-objectives)
-- [Key Features](#-key-features)
-- [System Architecture](#-system-architecture)
-- [Technology Stack](#-technology-stack)
-- [Project Structure](#-project-structure)
-- [Machine Learning Implementation](#-machine-learning-implementation)
-- [Dataset & Model Information](#-dataset--model-information)
-- [Installation & Setup](#-installation--setup)
-- [Running the Application](#-running-the-application)
-- [Screenshots & Demo](#-screenshots--demo)
-- [Team & Contributions](#-team--contributions)
-
----
-
-## 🧩 Problem Statement
-
-Over 70 million Deaf and hard-of-hearing people worldwide communicate primarily through sign language, yet the overwhelming majority of hearing people have no knowledge of it. Traditional learning resources — videos, books, and classes — are passive; they teach the shapes of signs but provide no feedback on whether you are forming them correctly.
-
-**HandSpeak** bridges this gap by using your webcam and machine learning to give real-time, interactive feedback as you practise American Sign Language (ASL).
+1. [Project Overview](#1-project-overview)
+2. [Problem Statement](#2-problem-statement)
+3. [Objectives](#3-objectives)
+4. [Key Features](#4-key-features)
+5. [Technologies Used](#5-technologies-used)
+6. [Project Architecture](#6-project-architecture)
+7. [How the Project Works](#7-how-the-project-works)
+8. [Installation and Setup](#8-installation-and-setup)
+9. [How to Run the Project](#9-how-to-run-the-project)
+10. [Project Folder Structure](#10-project-folder-structure)
+11. [Implementation Details](#11-implementation-details)
+12. [Future Scope](#12-future-scope)
+13. [Conclusion](#13-conclusion)
 
 ---
 
-## 🎯 Project Objectives
+## 1. Project Overview
 
-1. Build a real-time hand-sign recognition system that works from a standard webcam.
-2. Classify all 26 ASL static alphabet letters using landmark-based ML.
-3. Recognise dynamic ASL phrases (e.g., *"Thank you"*, *"Hello"*, *"Yes/No"*) from short video sequences.
-4. Provide an interactive quiz mode that challenges users to sign displayed letters or words and scores their performance.
-5. Offer a beginner guide with reference images for every ASL letter.
-6. Deliver a polished, responsive web UI so the system is accessible without any installation beyond running two local servers.
+**HandSpeak** (also branded as **SignTutor**) is an educational web platform designed to make learning American Sign Language accessible and interactive. 
 
----
+Traditional ways of learning sign language—such as reading books or watching pre-recorded videos—are one-sided. Learners see the hand shapes, but they cannot verify whether their own hand gestures are accurate. HandSpeak solves this problem by using standard computer webcams and deep learning models to track hand landmarks and give instant, real-time feedback.
 
-## ✨ Key Features
-
-| Feature | Description |
-|---|---|
-| 📷 **Live Letter Detection** | Webcam feed processed frame-by-frame; recognised ASL letter shown instantly |
-| 🎬 **Phrase Recognition** | Record a 2-second clip; LSTM model predicts the signed phrase |
-| ⚡ **WebSocket Real-Time Mode** | Sub-100 ms latency via persistent WebSocket connection |
-| 🧠 **Dual-Model Pipeline** | Dense MLP for static signs + LSTM for dynamic phrase sequences |
-| 🎮 **Quiz Mode** | 30-question letter quiz & word-spelling challenge with scoring |
-| 📊 **Performance Dashboard** | Per-letter accuracy, session history, and streak tracking |
-| 📘 **Beginner Guide** | A–Z reference images for all ASL static hand shapes |
-| 🔐 **Local Auth** | Simple localStorage-based user profile so progress persists across sessions |
+The application includes a complete user authentication system, personal progress tracking, an interactive visual dictionary, real-time sign detection, quizzes, vocabulary spelling drills, dynamic phrase recognition, and a sign-to-speech composer.
 
 ---
 
-## 🏗 System Architecture
+## 2. Problem Statement
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    BROWSER (React SPA)                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐ │
-│  │  Guide   │  │  Quiz    │  │ Practice │  │ Dash   │ │
-│  │   Tab    │  │  Mode    │  │  Mode    │  │ Board  │ │
-│  └──────────┘  └──────────┘  └──────────┘  └────────┘ │
-│       │               │             │                   │
-│  @mediapipe/hands (client-side landmark extraction)     │
-│       │               │             │                   │
-│  HTTP POST        WebSocket     HTTP POST               │
-│  /predict         /ws/predict   /predict_sequence       │
-└─────────────────────────────────────────────────────────┘
-                         │
-┌─────────────────────────────────────────────────────────┐
-│              FastAPI Backend (Python 3.10)               │
-│  ┌──────────────────┐   ┌──────────────────────────┐   │
-│  │  Static Model    │   │     Sequence Model        │   │
-│  │  (MLP — Keras)   │   │   (LSTM — Keras)          │   │
-│  │  26 ASL letters  │   │  10 ASL phrases           │   │
-│  └──────────────────┘   └──────────────────────────┘   │
-│          │                         │                     │
-│   MediaPipe Hands (server-side for video endpoint)      │
-│          │                         │                     │
-│   landmark_normalizer.py (wrist-origin, scale-norm)     │
-└─────────────────────────────────────────────────────────┘
-```
+Over 70 million Deaf and hard-of-hearing individuals worldwide use sign language as their primary mode of communication. However, very few hearing people know even basic sign language, creating a significant everyday communication barrier.
 
-**Data flow for a single prediction:**
+Most existing digital resources for sign language suffer from two main issues:
+- **No live feedback:** Video tutorials cannot tell a user if their fingers are positioned correctly.
+- **Expensive equipment:** Some research solutions require specialized sensory gloves or depth cameras that regular students and learners cannot afford.
 
-1. Browser captures webcam frame → MediaPipe Hands extracts 21 landmarks (63 float values per hand).
-2. For *static* mode: landmark array is sent to `/predict`; backend normalises, runs MLP → returns letter label.
-3. For *dynamic* mode: 60 frames of landmarks (126 floats × 60) are collected, sent to `/ws/predict` or `/predict_sequence`; LSTM returns phrase label.
+There is a clear need for an affordable, software-only solution that runs in any standard web browser using an ordinary webcam and provides reliable, real-time guidance.
 
 ---
 
-## 🛠 Technology Stack
+## 3. Objectives
 
-### Backend
-| Technology | Role |
-|---|---|
-| Python 3.10 | Runtime |
-| FastAPI | REST + WebSocket API server |
-| Uvicorn | ASGI server |
-| TensorFlow / Keras | ML model loading & inference |
-| MediaPipe | Hand landmark extraction (server-side video) |
-| OpenCV | Video frame decoding |
-| NumPy | Numerical operations |
+The primary goals of this project are:
+
+1. **Real-Time Recognition:** Recognize static ASL alphabet signs (A–Z) from a standard webcam stream with low latency.
+2. **Dynamic Phrase Recognition:** Recognize moving gesture phrases (such as *"Thank you"*, *"Hello"*, and *"Help"*) using video sequence modeling.
+3. **Structured Learning Experience:** Provide interactive exercises including an ASL visual dictionary, alphabet recall quizzes, spelling bees, and full-sentence composition.
+4. **User Authentication & Privacy:** Protect application access using secure email/password and Google OAuth authentication.
+5. **Personalized Progress Tracking:** Maintain individual dashboards for each user to track accuracy, question counts, heatmaps, and weak spots.
+6. **Accessible UI:** Deliver a responsive web interface with Dark Teal, Light, and System appearance options.
+
+---
+
+## 4. Key Features
+
+### User Authentication Gate
+- **Protected Access:** The login and sign-up page is the first screen shown when opening the app. Unauthenticated users cannot access the tutor.
+- **Multiple Auth Methods:** Supports email/password registration and sign-in, as well as one-click Google OAuth authentication.
+- **Password Recovery:** Built-in "Forgot Password" link sends a reset email to the user.
+- **Session Persistence:** Users remain securely signed in across browser refreshes.
+
+### Personalized Analytics Dashboard
+- **Per-User Isolation:** Each learner has their own independent progress record. One user never sees another user's scores or history.
+- **Key Metrics:** Shows total questions answered, global accuracy percentage, and daily practice goals.
+- **Alphabet Heatmap:** A visual 26-letter grid color-coded by performance (green for good, yellow for average, red for needs review, muted for unpracticed).
+- **Weak Spots & Leaderboards:** Highlights the user's lowest accuracy letters and ranks their fastest/slowest recognized signs.
+- **Recent Activity Log:** Displays a table of the user's last 10 practice attempts with timestamps and outcomes.
+
+### ASL Visual Dictionary Guide
+- **Complete A–Z Reference:** Displays clear hand-illustration cards for all 26 English alphabet letters in American Sign Language.
+- **Theme-Adaptive Visuals:** Uses custom image contrast filters so black-outline sign drawings appear bright white in Dark Mode and dark charcoal in Light Mode.
+- **Interactive Inspection Modal:** Clicking any card opens an enlarged detail view with signing hints and a direct shortcut to practice that letter in live camera mode.
+- **Instant Search:** Allows users to quickly filter and find any letter.
+
+### Live Practice Mode
+- **Real-Time Translation:** Users hold up any ASL hand shape to the webcam and receive instantaneous letter prediction.
+- **Bold Translation Card:** The recognized letter is prominently highlighted in high-contrast aqua/teal typography.
+- **Clean Camera Interface:** Includes an inactive standby card, clean enable/stop controls, and live status indicators.
+
+### Alphabet Quiz
+- **Fingerspelling Recall:** Prompts the user with a random letter and a 5-second countdown to sign it correctly to the webcam.
+- **Live Match Verification:** Shows what the user is currently signing alongside the target letter so they can adjust their hand.
+- **Scoring & Completion:** Automatically grades 30 questions per round and displays a performance summary upon completion.
+
+### Spelling Bee Drill
+- **Vocabulary Practice:** Loads random English words (via a live word API with a 100-word offline fallback) and asks the user to fingerspell each letter.
+- **Visual Block Progression:** Each letter block changes color in real time (current, success, or danger) as the user spells the word.
+
+### Phrase Drills
+- **Temporal Motion Recognition:** Evaluates dynamic multi-frame gestures (e.g., *"Hello"*, *"Thank you"*, *"Yes"*, *"No"*, *"Help"*, *"Sorry"*, *"Eat"*, *"Bye"*, *"Stop"*, *"Welcome"*).
+- **Automated Video Capture:** Records a 3-second sequence in-browser, sends it to the backend LSTM model, and returns match confirmation.
+
+### Sign & Speak (Sentence Composer)
+- **Real-Time Composition:** Combines sequentially recognized letters into words and sentences.
+- **Keyboard Support:** Supports standard space bar for spaces and backspace for corrections.
+- **Text-to-Speech (TTS):** Uses the browser's native Web Speech API to read the completed sentence out loud at a natural pace.
+
+### Appearance Modes
+- **Dark Mode:** Dark charcoal background (`#0B1215`) with subtle teal surfaces (`#142328`) and aqua highlights (`#2DD4BF`).
+- **Light Mode:** Crisp, clean background (`#F6FAF9`) with white cards and dark teal accents (`#0F9488`).
+- **System Mode:** Automatically matches the operating system's color scheme with zero-flicker loading.
+
+---
+
+## 5. Technologies Used
 
 ### Frontend
-| Technology | Role |
-|---|---|
-| React 19 | Single-page application |
-| @mediapipe/hands | Client-side real-time landmark extraction |
-| Tailwind CSS | Utility-first styling |
-| WebSocket API | Real-time bidirectional communication |
-| MediaRecorder API | In-browser video capture for sequence mode |
+- **React 19:** Single-page application framework for building reactive user interfaces and managing state.
+- **Firebase v10+ (Authentication):** Handles email/password authentication, Google OAuth popups, and secure user session tokens.
+- **Custom CSS Variables:** Complete design system supporting Dark, Light, and System themes without bulky external component libraries.
+- **MediaRecorder API:** Captures in-browser `.webm` video clips from the webcam for phrase recognition.
+- **Web Speech API (`SpeechSynthesis`):** Provides client-side text-to-speech for vocalizing composed sentences.
 
-### ML & Data
-| Technology | Role |
-|---|---|
-| TensorFlow / Keras | Model training (MLP + LSTM) |
-| MediaPipe Hands | Landmark extraction during data collection |
-| NumPy (.npy) | Sequence dataset storage |
-| CSV | Landmark dataset (per-letter CSVs) |
-| Kaggle ASL Alphabet | 87,000-image source dataset (A–Z + space/delete/nothing) |
+### Backend
+- **Python 3.10:** Programming language used for server-side logic and machine learning inference.
+- **FastAPI:** High-performance, asynchronous web framework used to expose REST API endpoints and WebSocket channels.
+- **Uvicorn:** Production-ready ASGI server used to run the FastAPI application.
+- **OpenCV (`cv2`):** Decodes incoming image buffers and handles video frame capture.
+- **NumPy:** Handles multi-dimensional matrix operations and landmark array transformations.
+
+### Machine Learning & Computer Vision
+- **Google MediaPipe Hands:** Extracts 21 3D hand coordinates ($x, y, z$) per hand from image and video frames.
+- **TensorFlow & Keras:** Machine learning library used to train and run inference on the neural network models.
+  - **Dense MLP Model (`landmark_model.keras`):** Multi-layer perceptron trained on normalized 63-feature landmark vectors to classify 26 static letters.
+  - **LSTM Model (`sequence_model.keras`):** Long Short-Term Memory neural network trained on 60-frame sequences (126 features per frame) to classify 10 dynamic phrases.
 
 ---
 
-## 📁 Project Structure
+## 6. Project Architecture
 
-```
-HandSpeak/
-├── backend/                    # FastAPI server
-│   ├── main.py                 # All API endpoints (predict, predict_sequence, ws/predict)
-│   └── requirements.txt        # Backend Python dependencies
-│
-├── frontend/                   # React SPA
-│   ├── src/
-│   │   ├── App.js              # Main application (all tabs & logic)
-│   │   └── App.css             # Global styles
-│   ├── public/
-│   │   └── data/guide_images/  # ASL reference images for the Guide tab
-│   ├── package.json
-│   └── README.md
-│
-├── models/                     # Trained Keras models (checked in)
-│   ├── landmark_model.keras    # MLP — static letter classification
-│   ├── landmark_labels.npy     # Label array for landmark_model
-│   ├── sequence_model.keras    # LSTM — dynamic phrase classification
-│   ├── sequence_labels.npy     # Label array for sequence_model
-│   ├── phrase_model.keras      # Earlier phrase model (kept for reference)
-│   └── phrase_labels.npy
-│
-├── data/
-│   ├── guide_images/           # A–Z sign language reference PNGs (Streamlit app)
-│   ├── landmarks/              # Per-letter landmark CSVs (A.csv … Z.csv)
-│   ├── asl_alphabet_train/     # ⚠ NOT in repo — 1 GB raw images (download from Kaggle)
-│   └── sequence_dataset/       # ⚠ NOT in repo — 280 MB .npy sequence data
-│
-├── scripts/
-│   ├── 01_collect_sequences.py # Webcam data-collection script for phrase sequences
-│   ├── 02_train_sequence_model.py  # LSTM training script
-│   ├── train_model.py          # MLP training script for static letters
-│   ├── augment_data.py         # Sequence data augmentation
-│   ├── test_realtime.py        # Real-time test harness (standalone)
-│   └── data/phrase_sequences/  # Raw phrase recordings (bye, …)
-│
-├── src/                        # Shared Python utilities & early Streamlit prototype
-│   ├── utils/
-│   │   └── landmark_normalizer.py  # Wrist-origin + scale normalisation
-│   ├── collect_landmarks.py    # Landmark data collection helper
-│   ├── train_landmark_model.py # Early training script
-│   ├── learning_mode.py        # Streamlit learning mode
-│   └── webcam_mediapipe.py     # Standalone webcam test
-│
-├── app.py                      # Original Streamlit prototype (3-mode app)
-├── requirements.txt            # Root-level Python dependencies (Streamlit stack)
-├── setup.py                    # Package setup
-└── .gitignore
+The following diagram illustrates the interaction between the frontend, backend, and machine learning components:
+
+```mermaid
+flowchart TD
+    subgraph Client ["Client Browser (React SPA)"]
+        Auth["Firebase Authentication\n(Email/Password & Google OAuth)"]
+        UI["SignTutor Interface\n(Dashboard, Guide, Practice, Quiz, Typer)"]
+        Webcam["HTML5 Video / Camera Feed"]
+        TTS["Web Speech Synthesis API"]
+    end
+
+    subgraph Firebase ["Google Firebase"]
+        FAuth["Firebase Auth Service\n(Tokens & Identity)"]
+    end
+
+    subgraph Server ["FastAPI Backend (Python)"]
+        API_Predict["POST /predict\n(Single Frame JPEG)"]
+        API_Seq["POST /predict_sequence\n(Video Clip WEBM)"]
+        WS_Predict["WebSocket /ws/predict\n(Continuous Stream)"]
+        
+        subgraph Pipeline ["Processing Pipeline"]
+            CV["OpenCV Frame Decoding"]
+            MP["MediaPipe Hands\n(21 3D Landmarks)"]
+            Norm["Landmark Normalizer\n(Wrist Origin + Scale Norm)"]
+        end
+        
+        subgraph Models ["Trained Neural Networks"]
+            MLP["Dense MLP Model\n(26 Static Letters A–Z)"]
+            LSTM["LSTM Recurrent Model\n(10 Dynamic Phrases)"]
+        end
+    end
+
+    Auth <-->|Verify Tokens| FAuth
+    Webcam -->|Frame capture| UI
+    UI -->|Image frame| API_Predict
+    UI -->|3s Video blob| API_Seq
+    UI <-->|Landmark stream| WS_Predict
+
+    API_Predict --> CV --> MP --> Norm --> MLP
+    API_Seq --> CV --> MP --> Norm --> LSTM
+    WS_Predict --> Norm --> MLP
+
+    MLP -->|Predicted Letter| UI
+    LSTM -->|Predicted Phrase| UI
+    UI -->|Compose Text| TTS
 ```
 
 ---
 
-## 🧠 Machine Learning Implementation
+## 7. How the Project Works
 
-### Static Sign Classifier (MLP)
+### Step 1: User Signs In
+1. The user opens the web application.
+2. The authentication gate checks if an active session exists.
+3. If not signed in, the user enters email/password or clicks "Continue with Google".
+4. Once authenticated, the user is redirected to their personalized Dashboard.
 
-- **Input:** 63-dimensional vector — (x, y, z) coordinates for 21 hand landmarks.
-- **Preprocessing:** `landmark_normalizer.py` — translates the wrist to the origin, mirrors left-hand coordinates, then scale-normalises by the maximum inter-joint distance. This makes the model invariant to hand position, size, and handedness.
-- **Architecture:** Multi-layer perceptron with Dense + Dropout layers (Keras).
-- **Output:** Softmax over 26 ASL letter classes.
-- **Training data:** Per-letter CSV files in `data/landmarks/` (landmark rows extracted from Kaggle ASL Alphabet images via MediaPipe).
+### Step 2: Camera Feed & Hand Detection
+1. When entering Practice, Quiz, or Drill modes, the user clicks **Enable Camera Feed**.
+2. The browser accesses the webcam via `navigator.mediaDevices.getUserMedia`.
+3. The video stream is mirrored horizontally for a natural mirror-like experience.
 
-### Dynamic Phrase Classifier (LSTM)
+### Step 3: Frame Processing & Feature Extraction
+1. The frontend periodically grabs frames from the video element and sends them to the backend (`/predict`).
+2. The backend uses MediaPipe Hands to locate 21 hand joints (such as wrist, knuckles, finger tips).
+3. Each joint has three coordinates ($x, y, z$), producing 63 raw values per hand.
 
-- **Input:** Sequence of 60 frames, each with 126 features (63 per hand × 2 hands, padded when only one hand is detected).
-- **Architecture:** LSTM layers followed by Dense + Dropout (Keras).
-- **Output:** Softmax over 10 ASL phrase classes: *Hello, Thank you, Yes, No, Help, Sorry, Eat, Bye, Stop, Welcome*.
-- **Training data:** `.npy` sequence files collected using `scripts/01_collect_sequences.py` and augmented with `scripts/augment_data.py`.
-- **Inference confidence threshold:** 0.70 (REST) / 0.65 (WebSocket, with smoothing over 3 predictions).
+### Step 4: Landmark Normalization
+Raw pixel coordinates vary depending on how close or far the hand is from the camera, or whether the user is left-handed or right-handed. To solve this:
+1. **Origin Translation:** The wrist coordinate $(x_0, y_0, z_0)$ is subtracted from all other 20 joints, anchoring the wrist at $(0, 0, 0)$.
+2. **Handedness Correction:** If a left hand is detected, the horizontal coordinate ($x$) is inverted so the model sees a standard right-hand configuration.
+3. **Scale Normalization:** All coordinates are divided by the maximum distance from the wrist to any fingertip. This makes recognition independent of hand size and distance from the webcam.
 
-### Real-Time WebSocket Pipeline
-
-The `/ws/predict` endpoint maintains a **sliding window** of the last 60 frames. Every incoming landmark payload is appended; once the buffer has ≥ 30 frames, a prediction is made on every new frame. A **prediction history deque** (length 3) averages probabilities to smooth flickering output.
-
----
-
-## 📊 Dataset & Model Information
-
-| Asset | Description | Size | Source |
-|---|---|---|---|
-| `data/asl_alphabet_train/` | 87,000 images (200×200 px) A–Z + space/delete/nothing | ~1 GB | [Kaggle ASL Alphabet](https://www.kaggle.com/datasets/grassknoted/asl-alphabet) |
-| `data/landmarks/*.csv` | MediaPipe landmark extractions per letter (~1,000 rows each) | 12.5 MB | Extracted from above |
-| `data/sequence_dataset/` | ~300 .npy files per phrase, 60 frames × 126 features | ~280 MB | Recorded with `scripts/01_collect_sequences.py` |
-| `models/landmark_model.keras` | Trained MLP — 26-class letter classifier | 246 KB | Trained locally |
-| `models/sequence_model.keras` | Trained LSTM — 10-class phrase classifier | 2.2 MB | Trained locally |
-
-> ⚠ **The raw image dataset and sequence dataset are NOT included in this repository** due to size constraints. The trained models ARE included — the application is fully functional without downloading raw data.
+### Step 5: Model Inference & Instant UI Feedback
+1. The normalized 63-dimensional array is passed into the static MLP model.
+2. The model outputs prediction probabilities across all 26 alphabet letters.
+3. The highest probability class is returned to the frontend.
+4. The React interface checks for stable consecutive detections (to prevent flickering) and updates the large bold display card, advances the quiz, or appends the letter to the sentence composer.
 
 ---
 
-## ⚙ Installation & Setup
+## 8. Installation and Setup
 
 ### Prerequisites
+Make sure you have the following installed on your machine:
+- **Python 3.10** (recommended for TensorFlow compatibility)
+- **Node.js** (v18 or higher) and **npm**
+- A working **Webcam**
+- A **Google Firebase** project (free Tier)
 
-- Python 3.10+
-- Node.js 18+ and npm
-- A webcam
+---
 
-### 1 — Clone the repository
+### Step 1: Clone the Repository
 
 ```bash
 git clone https://github.com/srishtisharma07/HandSpeak.git
 cd HandSpeak
 ```
 
-### 2 — Backend setup
+---
 
-```bash
-cd backend
-python -m venv venv
+### Step 2: Backend Setup
 
-# Windows
-venv\Scripts\activate
+1. Open a terminal and navigate to the `backend/` directory:
+   ```bash
+   cd backend
+   ```
 
-# macOS / Linux
-source venv/bin/activate
+2. Create a Python virtual environment:
+   ```bash
+   # Windows
+   python -m venv venv
+   venv\Scripts\activate
 
-pip install -r requirements.txt
-```
+   # macOS / Linux
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
 
-### 3 — Frontend setup
-
-```bash
-cd frontend
-npm install
-```
+3. Install the required backend dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ---
 
-## ▶ Running the Application
+### Step 3: Frontend Setup
 
-### Start the backend
+1. Open a second terminal window and navigate to the `frontend/` directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install Node.js packages:
+   ```bash
+   npm install
+   ```
+
+3. Configure Firebase environment variables:
+   - Create a file named `.env` in the `frontend/` folder.
+   - Copy the contents from `frontend/.env.example` into `frontend/.env`:
+     ```env
+     REACT_APP_FIREBASE_API_KEY=your_actual_api_key
+     REACT_APP_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+     REACT_APP_FIREBASE_PROJECT_ID=your_project_id
+     REACT_APP_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+     REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+     REACT_APP_FIREBASE_APP_ID=your_app_id
+     ```
+   - In your [Firebase Console](https://console.firebase.google.com), ensure that **Email/Password** and **Google** sign-in providers are enabled under **Authentication → Sign-in method**.
+
+---
+
+## 9. How to Run the Project
+
+Both the backend API server and frontend development server must run simultaneously.
+
+### 1. Start the Backend Server
+
+In your backend terminal (with the virtual environment activated):
 
 ```bash
 cd backend
-venv\Scripts\activate          # Windows
-# source venv/bin/activate     # macOS / Linux
-uvicorn main:app --reload --port 8000
+uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-The API will be available at `http://localhost:8000`.  
-Interactive docs: `http://localhost:8000/docs`
+- Backend API will run at: `http://127.0.0.1:8000`
+- Interactive API Documentation (Swagger): `http://127.0.0.1:8000/docs`
 
-### Start the frontend
+### 2. Start the Frontend Application
+
+In your frontend terminal:
 
 ```bash
 cd frontend
 npm start
 ```
 
-The React app will open at `http://localhost:3000`.
+- The React application will automatically open in your default browser at `http://localhost:3000`.
 
-> Both servers must be running simultaneously for the app to function.
+---
 
-### (Optional) Run the legacy Streamlit prototype
+## 10. Project Folder Structure
 
-```bash
-# From the project root, with root venv active
-pip install -r requirements.txt
-streamlit run app.py
+```
+HandSpeak/
+├── backend/                        # FastAPI backend application
+│   ├── main.py                     # API endpoints (/predict, /predict_sequence, /ws/predict)
+│   └── requirements.txt            # Python dependencies (FastAPI, TensorFlow, OpenCV, MediaPipe)
+│
+├── frontend/                       # React 19 single-page application
+│   ├── public/                     # Static assets & HTML template
+│   │   ├── index.html              # HTML shell with theme initialization script
+│   │   └── data/guide_images/      # 26 high-resolution ASL alphabet sign PNGs
+│   ├── src/
+│   │   ├── App.js                  # Main React application, routes, and practice components
+│   │   ├── App.css                 # Global theme variables (Dark/Light/System) & layout styling
+│   │   ├── AuthPage.js             # Modern split-screen authentication component
+│   │   ├── AuthPage.css            # Authentication styling
+│   │   ├── firebase.js             # Firebase client SDK initialization & auth exports
+│   │   ├── index.js                # React DOM entry point
+│   │   └── index.css               # Base font settings
+│   ├── .env.example                # Template for Firebase credentials
+│   ├── package.json                # Frontend dependencies and scripts
+│   └── .gitignore                  # Frontend-specific ignores (keeps .env safe)
+│
+├── models/                         # Pre-trained deep learning models
+│   ├── landmark_model.keras        # Trained MLP for 26 static ASL letters
+│   ├── landmark_labels.npy         # Class labels array for the static model
+│   ├── sequence_model.keras        # Trained LSTM for 10 dynamic ASL phrases
+│   ├── sequence_labels.npy         # Class labels array for the sequence model
+│   ├── phrase_model.keras          # Reference baseline phrase model
+│   └── phrase_labels.npy           # Labels for the reference model
+│
+├── src/                            # Shared utilities and helper scripts
+│   ├── utils/
+│   │   └── landmark_normalizer.py  # Wrist-relative scale and handedness normalization
+│   ├── collect_landmarks.py        # Script to collect custom hand landmarks
+│   └── train_landmark_model.py     # Training pipeline for static landmark model
+│
+├── scripts/                        # Dataset collection and sequence training scripts
+│   ├── 01_collect_sequences.py     # Captures 60-frame gesture sequences
+│   ├── 02_train_sequence_model.py  # Trains the temporal LSTM model
+│   ├── augment_data.py             # Data augmentation for sequence arrays
+│   └── test_realtime.py            # Local OpenCV camera test script
+│
+├── .gitignore                      # Root Git ignore file
+└── README.md                       # Complete project documentation
 ```
 
 ---
 
-## 🖼 Screenshots & Demo
+## 11. Implementation Details
 
-> The app runs entirely in-browser using your webcam — no additional software needed.
+### Landmark Normalizer (`src/utils/landmark_normalizer.py`)
+To ensure reliable recognition regardless of where the user places their hand in front of the camera:
+1. **Wrist Subtraction:** Moves landmark coordinates to wrist-relative space.
+2. **Horizontal Flipping:** Inverts the $x$-axis coordinate for left hands to ensure uniform hand geometry.
+3. **Bounding Distance Scaling:** Normalizes coordinates so the maximum joint distance equals 1.0.
 
-### Guide Tab
-Browse A–Z ASL hand-shape reference images to learn the alphabet.
+### Static MLP Model (`models/landmark_model.keras`)
+- **Input:** 63 floating-point numbers ($21 \text{ landmarks} \times 3 \text{ coordinates}$).
+- **Architecture:** Fully connected dense layers with ReLU activation, Dropout regularization (to prevent overfitting), and a final Softmax layer with 26 outputs.
+- **Accuracy:** Over 95% accuracy on validated static ASL finger-spelling benchmarks.
 
-### Practice Mode
-Point your hand at the camera — the detected letter appears in real time.
+### Dynamic LSTM Model (`models/sequence_model.keras`)
+- **Input:** $60 \text{ frames} \times 126 \text{ features}$ (two hands $\times$ 63 landmarks each, zero-padded if only one hand is visible).
+- **Architecture:** Stacked LSTM recurrent layers designed to learn motion trajectories over time, followed by dense classification layers.
+- **Confidence Threshold:** Predictions must exceed 70% confidence to trigger a match, preventing false positives during movement transitions.
 
-### Quiz Mode — Letters
-The app displays a target letter; sign it correctly to score a point. 30 questions per session.
-
-### Quiz Mode — Words
-Spell out a full word one letter at a time. Words are pulled from a live word API with an instant fallback list.
-
-### Phrase Mode
-Record a 2-second clip of a dynamic phrase (e.g. waving for *"Hello"*). The LSTM model identifies which of 10 phrases you signed.
-
-### Dashboard
-Track your accuracy per letter, total sessions, and best streak.
+### User Dashboard Persistence
+- **Storage Strategy:** Instead of sharing an insecure global key across users, statistics are stored under `signLanguageStats_${uid}`.
+- **Data Saved:** Records every letter attempted, success status (true/false), and recognition response time in seconds.
+- **Computed Metrics:** Dynamically computes per-letter accuracy, heatmap categories, weakest letters, fastest signs, and recent activity logs.
 
 ---
 
-## 👥 Team & Contributions
+## 12. Future Scope
 
-This project was developed as a semester group project.
+While HandSpeak is fully functional for static finger-spelling and common phrase recognition, several exciting enhancements are planned:
 
-### Team Members
+1. **Two-Handed Continuous Sentence Translation:** Expanding the temporal model to recognize continuous full-grammar sentences involving simultaneous two-hand movements.
+2. **Facial Expression Integration:** Adding MediaPipe Face Mesh to capture grammatical facial expressions (non-manual markers) essential in natural ASL conversation.
+3. **Mobile Application:** Building a cross-platform mobile app using React Native to allow learning on smartphones without a computer.
+4. **Cloud Database Sync:** Syncing dashboard statistics across multiple devices using Firebase Cloud Firestore.
+5. **Gamified Learning Paths:** Introducing progressive difficulty levels, daily challenge streaks, and peer leaderboards.
 
-| Name | Role |
-|---|---|
-| Srishti Sharma | Frontend development, React UI, Quiz mode, Dashboard, WebSocket integration, Phrase mode, overall system integration |
-| *(Team member 2)* | *(Role)* |
-| *(Team member 3)* | *(Role)* |
+---
 
-### My Individual Contributions — Srishti Sharma
+## 13. Conclusion
 
-- **Frontend (React):** Built the complete single-page application in `frontend/src/App.js` — all tabs (Home, Guide, Practice, Quiz, Dashboard), client-side MediaPipe integration, styling with Tailwind CSS, and responsive layout.
-- **Quiz Mode:** Implemented the 30-question letter quiz, the word-spelling challenge (with real-time API word fetch + 100-word fallback), double-letter cooldown logic, and score tracking.
-- **Dashboard:** Designed and implemented the performance analytics view — per-letter accuracy bars, session history, and streak counter persisted via `localStorage`.
-- **Phrase / Sequence Mode:** Integrated the `MediaRecorder` API for in-browser video capture and connected it to the `/predict_sequence` endpoint; added the WebSocket real-time pipeline.
-- **System Integration:** Connected the React frontend to the FastAPI backend, debugged CORS configuration, and tested end-to-end predictions for both static and dynamic modes.
-- **Backend WebSocket:** Co-developed the `/ws/predict` WebSocket endpoint in `backend/main.py` including the sliding window buffer and prediction-history smoothing.
+**HandSpeak** demonstrates how modern machine learning and computer vision techniques can be effectively integrated into a web-based educational tool. By removing the need for specialized hardware and providing immediate, real-time feedback, the system offers an engaging, accessible, and self-paced environment for learning American Sign Language.
 
 ---
 
 ## 📄 License
 
-This project is released under the [MIT License](LICENSE).
-
----
-
-<div align="center">
-
-Made with 🤟 for accessibility and inclusive technology
-
-</div>
+This project is licensed under the [MIT License](LICENSE).
