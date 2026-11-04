@@ -215,6 +215,17 @@ function App() {
     }
   };
 
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject;
+      const tracks = stream.getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraRunning(false);
+    setPrediction("");
+  };
+
   const recordAndPredictSequence = useCallback(() => {
     if (!videoRef.current || !videoRef.current.srcObject) return;
     if (tabRef.current === "phrases" && !phraseActiveRef.current) return;
@@ -871,119 +882,409 @@ function App() {
             {!hideCameraTabs.includes(tab) && (
               <div className="practice-layout">
                 
-                <div className="camera-section">
+                {/* Camera Panel */}
+                <div className="camera-panel panel">
+                  <div className="panel-header">
+                    <div className="panel-header-left">
+                      <span className="panel-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                          <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
+                      </span>
+                      <h3 className="panel-title">Camera Feed</h3>
+                    </div>
+                    <div className="panel-header-right">
+                      {isCameraRunning ? (
+                        <span className="status-badge live">
+                          <span className="status-indicator"></span>
+                          LIVE
+                        </span>
+                      ) : (
+                        <span className="status-badge standby">STANDBY</span>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="camera-wrapper">
                     <video ref={videoRef} autoPlay playsInline muted />
-                    {!isCameraRunning && (
-                      <div className="camera-overlay">
-                        <button className="btn primary" onClick={startCamera}>Enable Camera Feed</button>
+                    {!isCameraRunning ? (
+                      <div className="camera-placeholder">
+                        <div className="camera-placeholder-icon">
+                          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                          </svg>
+                        </div>
+                        <h4 className="placeholder-title">Camera Feed Inactive</h4>
+                        <p className="placeholder-sub">Click below to enable your camera for live gesture recognition.</p>
+                        <button className="btn primary lg mt-20" onClick={startCamera}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: 8}}>
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                          </svg>
+                          Enable Camera Feed
+                        </button>
                       </div>
+                    ) : (
+                      isRecording && (
+                        <div className="camera-live-overlay">
+                          <span className="recording-badge">
+                            <span className="rec-dot"></span> RECORDING SEQUENCE
+                          </span>
+                        </div>
+                      )
                     )}
                   </div>
-                  {isCameraRunning && (
-                    <div className="live-status">
-                      <span className="status-indicator"></span>
-                      Live Translation: <strong>{prediction || "Waiting for sign..."}</strong>
-                      {isRecording && <span className="recording-badge">Recording sequence</span>}
-                    </div>
-                  )}
+
+                  <div className="camera-controls-footer">
+                    {isCameraRunning ? (
+                      <div className="camera-status-row">
+                        <span className="camera-status-hint">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                          </svg>
+                          Keep hand centered and well-lit in front of the camera
+                        </span>
+                        <button className="btn outline red sm" onClick={stopCamera}>
+                          Stop Camera
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="camera-status-hint">
+                        All computer vision processing runs locally in real-time.
+                      </p>
+                    )}
+                  </div>
                 </div>
 
+                {/* Practice Mode / Game Mode Content */}
                 <div className="practice-content">
                   
+                  {/* Practice Mode */}
                   {tab === "predict" && (
-                    <div className="view-container">
-                      <h2 className="section-title">Practice Mode</h2>
-                      <p className="subtitle">Show any sign to the camera to see the translation.</p>
+                    <div className="practice-panel panel">
+                      <div className="panel-header">
+                        <div className="panel-header-left">
+                          <span className="panel-tag">Live Translation</span>
+                          <h3 className="panel-title">Practice Mode</h3>
+                        </div>
+                        <span className="badge-pill">ASL Letters (A–Z)</span>
+                      </div>
+
+                      <p className="panel-desc">
+                        Show any sign to the camera to see the real-time AI translation. Hold gestures steady for optimal detection.
+                      </p>
+
+                      {/* Prominent Bold Answer / Translation Display */}
+                      <div className="prediction-display-card">
+                        <div className="prediction-display-header">
+                          <span className="prediction-label">CURRENT DETECTED SIGN</span>
+                          {prediction && <span className="detection-confidence">Active Detection</span>}
+                        </div>
+
+                        <div className="prediction-value-box">
+                          {prediction ? (
+                            <h1 className="prediction-huge-bold">{prediction}</h1>
+                          ) : isCameraRunning ? (
+                            <div className="prediction-waiting">
+                              <span className="status-indicator"></span>
+                              <span className="waiting-text">Waiting for hand gesture...</span>
+                            </div>
+                          ) : (
+                            <div className="prediction-inactive">
+                              <span className="inactive-dash">—</span>
+                              <span className="inactive-text">Camera offline</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="prediction-footer">
+                          {prediction ? (
+                            <span className="prediction-hint success">
+                              Identified sign: <strong>"{prediction}"</strong>
+                            </span>
+                          ) : isCameraRunning ? (
+                            <span className="prediction-hint">
+                              Show your hand gesture clearly within frame
+                            </span>
+                          ) : (
+                            <span className="prediction-hint">
+                              Enable camera on the left to start live translation
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="practice-guidance-card">
+                        <h4 className="guidance-title">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                          </svg>
+                          Need a Refresher?
+                        </h4>
+                        <p className="guidance-text">
+                          Browse all 26 American Sign Language finger-spelling gestures in the Dictionary Guide.
+                        </p>
+                        <button className="btn outline sm" onClick={() => setTab("guide")}>
+                          Open Dictionary Guide →
+                        </button>
+                      </div>
                     </div>
                   )}
 
+                  {/* Alphabet Quiz */}
                   {tab === "quiz" && (
-                    <div className="view-container">
+                    <div className="practice-panel panel">
+                      <div className="panel-header">
+                        <div className="panel-header-left">
+                          <span className="panel-tag">Interactive Challenge</span>
+                          <h3 className="panel-title">Alphabet Quiz</h3>
+                        </div>
+                        {quizActiveRef.current && (
+                          <span className="badge-pill score-pill">
+                            Score: {score} / {total}
+                          </span>
+                        )}
+                      </div>
+
                       {!quizActiveRef.current && total < MAX_Q && total === 0 ? (
-                        <button className="btn primary lg" onClick={startQuiz}>Start Alphabet Quiz</button>
+                        <div className="quiz-intro-state">
+                          <p className="panel-desc">
+                            Test your fingerspelling recall! Sign the presented letters to the camera within 5 seconds each.
+                          </p>
+                          <div className="quiz-rules-card">
+                            <div className="rule-item">
+                              <span className="rule-badge">30</span>
+                              <span>Questions per round</span>
+                            </div>
+                            <div className="rule-item">
+                              <span className="rule-badge">5s</span>
+                              <span>Time per question</span>
+                            </div>
+                            <div className="rule-item">
+                              <span className="rule-badge">AI</span>
+                              <span>Real-time grading</span>
+                            </div>
+                          </div>
+                          <button className="btn primary lg full-width mt-20" onClick={startQuiz}>
+                            Start Alphabet Quiz
+                          </button>
+                        </div>
                       ) : total >= MAX_Q ? (
-                        <div className="panel result-panel">
-                          <h2>Quiz Complete</h2>
-                          <h1 className="huge-score">{score} / {MAX_Q}</h1>
-                          <button className="btn primary mt-20" onClick={startQuiz}>Play Again</button>
+                        <div className="quiz-complete-state">
+                          <span className="panel-tag">Round Complete</span>
+                          <h2 className="result-headline">Final Score</h2>
+                          <div className="huge-score-box">
+                            <span className="huge-score">{score}</span>
+                            <span className="score-denom">/ {MAX_Q}</span>
+                          </div>
+                          <p className="result-comment">
+                            {score >= 25 ? "Outstanding ASL accuracy! Excellent fingerspelling mastery." : score >= 15 ? "Solid score! Review any challenging signs in the Dictionary Guide." : "Good try! Practice more letters and try again."}
+                          </p>
+                          <button className="btn primary lg full-width mt-20" onClick={startQuiz}>
+                            Play Again
+                          </button>
                         </div>
                       ) : (
-                        <div className="panel active-panel">
-                          <p className="subtitle">Question {total + 1} of {MAX_Q} — Score: {score}</p>
-                          <h1 className="target-display">{target}</h1>
-                          <button className="btn outline red mt-20" onClick={() => progressQuiz(false)}>Skip / Mark Wrong</button>
+                        <div className="quiz-active-state">
+                          <div className="quiz-progress-bar-container">
+                            <div className="quiz-progress-header">
+                              <span>Question {total + 1} of {MAX_Q}</span>
+                              <span>Score: {score}</span>
+                            </div>
+                            <div className="progress-bar-bg">
+                              <div className="progress-bar-fill" style={{width: `${((total) / MAX_Q) * 100}%`}}></div>
+                            </div>
+                          </div>
+
+                          <div className="quiz-target-card">
+                            <span className="target-label">SIGN THIS LETTER:</span>
+                            <h1 className="target-display">{target}</h1>
+                          </div>
+
+                          <div className="quiz-detection-feedback">
+                            <span className="feedback-label">Live Recognized Sign:</span>
+                            <strong className={`feedback-value ${prediction === target ? "correct" : ""}`}>
+                              {prediction ? `"${prediction}"` : "Waiting for sign..."}
+                            </strong>
+                          </div>
+
+                          <button className="btn outline red full-width mt-20" onClick={() => progressQuiz(false)}>
+                            Skip / Mark Wrong
+                          </button>
                         </div>
                       )}
                     </div>
                   )}
 
+                  {/* Spelling Bee */}
                   {tab === "word" && (
-                    <div className="view-container">
+                    <div className="practice-panel panel">
+                      <div className="panel-header">
+                        <div className="panel-header-left">
+                          <span className="panel-tag">Vocabulary Drill</span>
+                          <h3 className="panel-title">Spelling Bee</h3>
+                        </div>
+                        <span className="badge-pill">5s per letter</span>
+                      </div>
+
                       {!wordActiveRef.current && !wordComplete ? (
-                         <button className="btn primary lg" onClick={startWordMode} disabled={isFetchingWord}>
-                           {isFetchingWord ? "Loading..." : "Start Spelling Bee"}
-                         </button>
+                        <div className="quiz-intro-state">
+                          <p className="panel-desc">
+                            Spell random English vocabulary words letter-by-letter in American Sign Language before the 5-second timer per letter expires!
+                          </p>
+                          <button className="btn primary lg full-width mt-20" onClick={startWordMode} disabled={isFetchingWord}>
+                            {isFetchingWord ? "Loading..." : "Start Spelling Bee"}
+                          </button>
+                        </div>
                       ) : wordComplete ? (
-                        <div className="panel result-panel">
-                          <h2>Word Completed</h2>
+                        <div className="quiz-complete-state">
+                          <span className="panel-tag">Word Completed</span>
+                          <h2 className="result-headline">{word}</h2>
                           <div className="word-blocks mt-20">
-                            {word.split("").map((char, i) => (<span key={i} className={`block ${wordResults[i] ? "success" : "danger"}`}>{char}</span>))}
+                            {word.split("").map((char, i) => (
+                              <span key={i} className={`block ${wordResults[i] ? "success" : "danger"}`}>{char}</span>
+                            ))}
                           </div>
-                          <button className="btn primary mt-20" onClick={startWordMode} disabled={isFetchingWord}>
+                          <p className="result-comment mt-20">
+                            {wordResults.filter(Boolean).length === word.length
+                              ? "Perfect spelling! Every single letter verified."
+                              : `Spelled with ${wordResults.filter(Boolean).length}/${word.length} letters accurate.`}
+                          </p>
+                          <button className="btn primary lg full-width mt-20" onClick={startWordMode} disabled={isFetchingWord}>
                             {isFetchingWord ? "Loading..." : "Next Word"}
                           </button>
                         </div>
                       ) : (
-                        <div className="panel active-panel">
-                          <p className="subtitle">5 seconds per letter</p>
-                          <div className="word-blocks mt-20">
-                            {word.split("").map((char, i) => {
-                              let status = "";
-                              if (i === wordProgress) status = "current";
-                              else if (i < wordProgress) status = wordResults[i] ? "success" : "danger";
-                              return (<span key={i} className={`block ${status}`}>{char}</span>);
-                            })}
+                        <div className="quiz-active-state">
+                          <p className="panel-desc">Sign the highlighted letter to spell the word:</p>
+                          <div className="word-blocks-container">
+                            <div className="word-blocks">
+                              {word.split("").map((char, i) => {
+                                let status = "";
+                                if (i === wordProgress) status = "current";
+                                else if (i < wordProgress) status = wordResults[i] ? "success" : "danger";
+                                return (<span key={i} className={`block ${status}`}>{char}</span>);
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="quiz-detection-feedback mt-20">
+                            <span className="feedback-label">Live Recognized Sign:</span>
+                            <strong className="feedback-value">
+                              {prediction ? `"${prediction}"` : "Waiting for sign..."}
+                            </strong>
                           </div>
                         </div>
                       )}
                     </div>
                   )}
 
+                  {/* Phrase Drills */}
                   {tab === "phrases" && (
-                    <div className="view-container">
+                    <div className="practice-panel panel">
+                      <div className="panel-header">
+                        <div className="panel-header-left">
+                          <span className="panel-tag">Dynamic Sequence</span>
+                          <h3 className="panel-title">Phrase Drills</h3>
+                        </div>
+                        <span className="badge-pill">Whole Gestures</span>
+                      </div>
+
                       {!phrase ? (
-                         <button className="btn primary lg" onClick={startPhraseMode}>Start Phrase Drills</button>
+                        <div className="quiz-intro-state">
+                          <p className="panel-desc">
+                            Perform dynamic motion phrases (like "Thank you", "Hello", "Welcome", "Yes"). The camera captures a 3-second motion sequence for temporal neural recognition.
+                          </p>
+                          <button className="btn primary lg full-width mt-20" onClick={startPhraseMode}>
+                            Start Phrase Drills
+                          </button>
+                        </div>
                       ) : phraseResult === 'correct' ? (
-                        <div className="panel result-panel">
-                          <h2>Excellent!</h2>
-                          <h1 className="target-display success">{phrase}</h1>
-                          <button className="btn primary mt-20" onClick={startPhraseMode}>Next Drill</button>
+                        <div className="quiz-complete-state">
+                          <span className="status-badge live">PERFECT MATCH</span>
+                          <h1 className="target-display success mt-20">{phrase}</h1>
+                          <p className="result-comment">Excellent! The neural network accurately classified your phrase motion.</p>
+                          <button className="btn primary lg full-width mt-20" onClick={startPhraseMode}>
+                            Next Drill
+                          </button>
                         </div>
                       ) : phraseResult === 'wrong' ? (
-                        <div className="panel result-panel">
-                          <h2>Time's Up ⏳</h2>
-                          <h1 className="target-display danger">{phrase}</h1>
-                          <button className="btn primary mt-20" onClick={startPhraseMode}>Try Another</button>
+                        <div className="quiz-complete-state">
+                          <span className="status-badge danger">TRY AGAIN</span>
+                          <h1 className="target-display danger mt-20">{phrase}</h1>
+                          <p className="result-comment">Timer expired or motion gesture not recognized. Keep gestures clear and centered.</p>
+                          <button className="btn primary lg full-width mt-20" onClick={startPhraseMode}>
+                            Try Another Drill
+                          </button>
                         </div>
                       ) : (
-                        <div className="panel active-panel">
-                          <p className="subtitle">Perform the drill within 10 seconds</p>
-                          <h1 className="target-display">{phrase}</h1>
+                        <div className="quiz-active-state">
+                          <p className="panel-desc">Perform the phrase within 10 seconds:</p>
+                          <div className="phrase-target-card">
+                            <span className="target-label">TARGET PHRASE:</span>
+                            <h1 className="target-display">{phrase}</h1>
+                          </div>
+                          <div className="phrase-status-box">
+                            {isRecording ? (
+                              <span className="recording-status-text">
+                                <span className="status-indicator"></span> Recording motion sequence...
+                              </span>
+                            ) : (
+                              <span className="waiting-status-text">
+                                Ready for sequence capture...
+                              </span>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
                   )}
 
+                  {/* Sign & Speak */}
                   {tab === "sentence" && (
-                    <div className="view-container">
-                      <h2 className="section-title" style={{marginBottom: "24px"}}>Sign & Speak</h2>
-                      <div className="panel typer-panel">
-                        <h2 className="typed-sentence">{sentence || <span className="placeholder">Start signing to compose text...</span>}</h2>
+                    <div className="practice-panel panel">
+                      <div className="panel-header">
+                        <div className="panel-header-left">
+                          <span className="panel-tag">Real-Time Composition</span>
+                          <h3 className="panel-title">Sign & Speak</h3>
+                        </div>
+                        <span className="badge-pill">Text-to-Speech</span>
                       </div>
+
+                      <p className="panel-desc">
+                        Fingerspell letters into the camera to compose sentences in real-time. Use the <strong>Space</strong> key to add space and <strong>Backspace</strong> to delete.
+                      </p>
+
+                      <div className="sentence-display-card">
+                        <div className="sentence-header">
+                          <span className="prediction-label">COMPOSED TEXT</span>
+                          <span className="live-char-preview">
+                            Live Sign: <strong>{prediction || "—"}</strong>
+                          </span>
+                        </div>
+                        <div className="panel typer-panel">
+                          <h2 className="typed-sentence">
+                            {sentence || <span className="placeholder">Start signing to compose text...</span>}
+                          </h2>
+                        </div>
+                      </div>
+
                       <div className="button-group mt-20">
-                        <button className="btn primary" onClick={speakSentence} disabled={!sentence}>Speak</button>
-                        <button className="btn outline red" onClick={() => { setSentence(""); lastAddedRef.current = ""; lastAddedTimeRef.current = 0;}}>Clear</button>
+                        <button className="btn primary lg" onClick={speakSentence} disabled={!sentence}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: 8}}>
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                          </svg>
+                          Speak Text
+                        </button>
+                        <button className="btn outline red lg" onClick={() => { setSentence(""); lastAddedRef.current = ""; lastAddedTimeRef.current = 0;}}>
+                          Clear
+                        </button>
                       </div>
                     </div>
                   )}
