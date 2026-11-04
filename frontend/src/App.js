@@ -592,28 +592,122 @@ function App() {
       <div className="main-container">
         
         <aside className={`sidebar ${isSidebarOpen ? "open" : "closed"}`}>
-          <nav className="sidebar-nav">
-            <div className="nav-group">
-              <button className={`nav-item ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>Home</button>
-              {user && (
-                <button className={`nav-item highlight ${tab === "dashboard" ? "active" : ""}`} onClick={() => setTab("dashboard")}>Dashboard</button>
-              )}
-            </div>
-            
-            <div className="nav-section-title">Learn</div>
-            <div className="nav-group indented">
-              <button className={`nav-item ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>Dictionary Guide</button>
-            </div>
-            
-            <div className="nav-section-title">Practice</div>
-            <div className="nav-group indented">
-              <button className={`nav-item ${tab === "predict" ? "active" : ""}`} onClick={() => setTab("predict")}>Practice</button>
-              <button className={`nav-item ${tab === "quiz" ? "active" : ""}`} onClick={() => setTab("quiz")}>Alphabet Quiz</button>
-              <button className={`nav-item ${tab === "word" ? "active" : ""}`} onClick={() => setTab("word")}>Spelling Bee</button>
-              <button className={`nav-item ${tab === "phrases" ? "active" : ""}`} onClick={() => setTab("phrases")}>Phrase Drills</button>
-              <button className={`nav-item ${tab === "sentence" ? "active" : ""}`} onClick={() => setTab("sentence")}>Sign & Speak</button>
-            </div>
-          </nav>
+          <div className="sidebar-content">
+            <nav className="sidebar-nav">
+              <div className="nav-section">
+                <div className="nav-group">
+                  <button className={`nav-item ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    <span>Home</span>
+                  </button>
+                  {user && (
+                    <button className={`nav-item ${tab === "dashboard" ? "active" : ""}`} onClick={() => setTab("dashboard")}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                      </svg>
+                      <span>Dashboard</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="nav-section">
+                <div className="nav-section-title">Learn</div>
+                <div className="nav-group">
+                  <button className={`nav-item ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    <span>Dictionary Guide</span>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="nav-section">
+                <div className="nav-section-title">Practice Modes</div>
+                <div className="nav-group">
+                  <button className={`nav-item ${tab === "predict" ? "active" : ""}`} onClick={() => setTab("predict")}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                      <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    <span>Practice</span>
+                  </button>
+                  <button className={`nav-item ${tab === "quiz" ? "active" : ""}`} onClick={() => setTab("quiz")}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span>Alphabet Quiz</span>
+                  </button>
+                  <button className={`nav-item ${tab === "word" ? "active" : ""}`} onClick={() => setTab("word")}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                      <line x1="9" y1="20" x2="15" y2="20"></line>
+                      <line x1="12" y1="4" x2="12" y2="20"></line>
+                    </svg>
+                    <span>Spelling Bee</span>
+                  </button>
+                  <button className={`nav-item ${tab === "phrases" ? "active" : ""}`} onClick={() => setTab("phrases")}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <span>Phrase Drills</span>
+                  </button>
+                  <button className={`nav-item ${tab === "sentence" ? "active" : ""}`} onClick={() => setTab("sentence")}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                    <span>Sign & Speak</span>
+                  </button>
+                </div>
+              </div>
+            </nav>
+          </div>
+
+          <div className="sidebar-footer">
+            {user ? (
+              <div className="sidebar-user-card">
+                <div className="sidebar-user-info">
+                  <div className="avatar">{user.name ? user.name.charAt(0).toUpperCase() : "U"}</div>
+                  <div className="sidebar-user-details">
+                    <span className="sidebar-user-name">{user.name}</span>
+                    <span className="sidebar-user-email">{user.email || "Learner"}</span>
+                  </div>
+                </div>
+                <button 
+                  className="sidebar-logout-btn" 
+                  onClick={handleLogout}
+                  title="Log Out"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  <span>Logout</span>
+                </button>
+              </div>
+            ) : (
+              <button className="sidebar-login-btn" onClick={() => setTab("login")}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                  <polyline points="10 17 15 12 10 7"></polyline>
+                  <line x1="15" y1="12" x2="3" y2="12"></line>
+                </svg>
+                <span>Log In</span>
+              </button>
+            )}
+          </div>
         </aside>
 
         <main className="content-area">
