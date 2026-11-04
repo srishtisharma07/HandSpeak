@@ -124,3 +124,7 @@ __marimo__/
 
 # ── Project build artefacts ──────────────────────────────────
 sign_language_tutor.egg-info/
+
+# Environment variables with secrets
+frontend/.env
+frontend/.env.local

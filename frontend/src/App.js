@@ -1,5 +1,9 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import "./App.css";
+import "./AuthPage.css";
+import AuthPage from "./AuthPage";
+// eslint-disable-next-line no-unused-vars
+import { auth, signOut, onAuthStateChanged } from "./firebase";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const PHRASES = ["Thank you", "Welcome", "Yes", "No", "Help", "Sorry", "Eat", "Hello", "Bye", "Stop"];
@@ -53,21 +57,58 @@ function App() {
   const [tab, setTabState] = useState("home");
   const tabRef = useRef("home");
 
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('signLanguageTutorUser');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
+  const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [quizStats, setQuizStats] = useState([]);
 
-  const [quizStats, setQuizStats] = useState(() => {
-    const savedStats = localStorage.getItem('signLanguageStats');
-    return savedStats ? JSON.parse(savedStats) : [];
-  });
+  // Load individual user stats when authenticated
+  const loadUserStats = (uid) => {
+    if (!uid) {
+      setQuizStats([]);
+      return;
+    }
+    const userKey = `signLanguageStats_${uid}`;
+    const saved = localStorage.getItem(userKey);
+    if (saved) {
+      try {
+        setQuizStats(JSON.parse(saved));
+      } catch (e) {
+        setQuizStats([]);
+      }
+    } else {
+      setQuizStats([]);
+    }
+  };
 
   useEffect(() => {
-    localStorage.setItem('signLanguageStats', JSON.stringify(quizStats));
-  }, [quizStats]);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        const rawName = firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split("@")[0] : "Learner");
+        const formattedName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+        const loggedUser = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          name: formattedName,
+          photoURL: firebaseUser.photoURL,
+        };
+        setUser(loggedUser);
+        loadUserStats(loggedUser.uid);
+      } else {
+        setUser(null);
+        setQuizStats([]);
+      }
+      setAuthChecked(true);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Save stats specifically for the active logged-in user
+  useEffect(() => {
+    if (user && user.uid) {
+      const userKey = `signLanguageStats_${user.uid}`;
+      localStorage.setItem(userKey, JSON.stringify(quizStats));
+    }
+  }, [quizStats, user]);
 
   const dashboardData = useMemo(() => {
     if (!quizStats || quizStats.length === 0) return null;
@@ -449,7 +490,7 @@ function App() {
   // ================= INTERVALS & TIMERS =================
   useEffect(() => {
     let interval;
-    const noCameraTabs = ["home", "login", "dashboard", "guide"];
+    const noCameraTabs = ["home", "dashboard", "guide"];
     if (isCameraRunning && !noCameraTabs.includes(tab)) {
       if (tab === "phrases") {
         interval = setInterval(() => recordAndPredictSequence(), 3500); 
@@ -507,13 +548,49 @@ function App() {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
-  const handleLogout = () => {
-    setUser(null); 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+    setUser(null);
+    setQuizStats([]);
+    setSentence("");
+    setScore(0);
+    setTotal(0);
     setTab("home");
-    localStorage.removeItem('signLanguageTutorUser'); 
+    localStorage.removeItem('signLanguageTutorUser');
   };
 
-  const hideCameraTabs = ["home", "login", "dashboard", "guide"];
+  const hideCameraTabs = ["home", "dashboard", "guide"];
+
+  const handleAuthSuccess = (firebaseUser) => {
+    const rawName = firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split("@")[0] : "Learner");
+    const formattedName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+    const loggedUser = {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      name: formattedName,
+      photoURL: firebaseUser.photoURL,
+    };
+    setUser(loggedUser);
+    loadUserStats(loggedUser.uid);
+    setTab("dashboard");
+  };
+
+  if (!authChecked) {
+    return (
+      <div className="auth-loading-screen">
+        <div className="auth-loading-spinner"></div>
+        <span className="auth-loading-text">Loading SignTutor...</span>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage onAuthSuccess={handleAuthSuccess} />;
+  }
 
   return (
     <div className="app-layout">
@@ -577,14 +654,15 @@ function App() {
             </button>
           </div>
 
-          {user ? (
+          {user && (
             <div className="user-profile-nav">
-              <div className="avatar">{user.name.charAt(0).toUpperCase()}</div>
+              {user.photoURL ? (
+                <img src={user.photoURL} alt="" className="avatar-img" referrerPolicy="no-referrer" />
+              ) : (
+                <div className="avatar">{user.name ? user.name.charAt(0).toUpperCase() : "U"}</div>
+              )}
               <span className="user-name">{user.name}</span>
-              <button className="btn-outline red" onClick={handleLogout}>Logout</button>
             </div>
-          ) : (
-            <button className="btn primary" onClick={() => setTab("login")}>Log In</button>
           )}
         </div>
       </header>
@@ -603,8 +681,7 @@ function App() {
                     </svg>
                     <span>Home</span>
                   </button>
-                  {user && (
-                    <button className={`nav-item ${tab === "dashboard" ? "active" : ""}`} onClick={() => setTab("dashboard")}>
+                      <button className={`nav-item ${tab === "dashboard" ? "active" : ""}`} onClick={() => setTab("dashboard")}>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="3" width="7" height="7"></rect>
                         <rect x="14" y="3" width="7" height="7"></rect>
@@ -613,7 +690,6 @@ function App() {
                       </svg>
                       <span>Dashboard</span>
                     </button>
-                  )}
                 </div>
               </div>
               
@@ -697,16 +773,7 @@ function App() {
                   <span>Logout</span>
                 </button>
               </div>
-            ) : (
-              <button className="sidebar-login-btn" onClick={() => setTab("login")}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                  <polyline points="10 17 15 12 10 7"></polyline>
-                  <line x1="15" y1="12" x2="3" y2="12"></line>
-                </svg>
-                <span>Log In</span>
-              </button>
-            )}
+            ) : null}
           </div>
         </aside>
 
@@ -720,41 +787,17 @@ function App() {
                   Practice the alphabet, test your spelling speed, and drill real-world phrases with instant, real-time feedback.
                 </p>
                 <div className="button-group">
-                  <button className="btn primary lg" onClick={() => setTab(user ? "dashboard" : "login")}>
-                    {user ? "Go to Dashboard" : "Get Started"}
+                  <button className="btn primary lg" onClick={() => setTab("dashboard")}>
+                    Go to Dashboard
                   </button>
                   <button className="btn outline lg" onClick={() => setTab("guide")}>View Dictionary</button>
                 </div>
               </div>
             )}
 
-            {tab === "login" && (
-              <div className="view-container">
-                <div className="panel login-panel">
-                  <h2>Welcome Back</h2>
-                  <p className="subtitle">Sign in to track your progress</p>
-                  
-                  <div className="form-group">
-                    <label>Email Address</label>
-                    <input type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="name@example.com"/>
-                  </div>
-                  <div className="form-group">
-                    <label>Password (Demo: Any)</label>
-                    <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="••••••••"/>
-                  </div>
-                  <button className="btn primary full-width" onClick={() => {
-                      if(loginEmail.includes("@")) {
-                        const newUser = { email: loginEmail, name: loginEmail.split("@")[0] };
-                        setUser(newUser);
-                        setTab("dashboard");
-                        localStorage.setItem('signLanguageTutorUser', JSON.stringify(newUser));
-                      } else { alert("Please enter a valid email to test the login."); }
-                    }}>Continue</button>
-                </div>
-              </div>
-            )}
 
-            {tab === "dashboard" && user && (
+
+            {tab === "dashboard" && (
               <div className="view-container align-left">
                 <div className="dashboard-header">
                   <div>
